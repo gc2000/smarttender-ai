@@ -159,7 +159,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             const level = headingMatch[1].length;
             const content = headingMatch[2].replace(/\[.*?\]$/, '').trim(); // Remove suffix like [generate by AI]
             
-            let headingLevel = HeadingLevel.HEADING_1;
+            // Explicitly type or cast to avoid narrowing to literal "Heading1"
+            let headingLevel: any = HeadingLevel.HEADING_1;
             switch (level) {
                 case 1: headingLevel = HeadingLevel.HEADING_1; break;
                 case 2: headingLevel = HeadingLevel.HEADING_2; break;
