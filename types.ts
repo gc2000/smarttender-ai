@@ -54,6 +54,20 @@ export enum TenderStatus {
   Rejected = 'Rejected'
 }
 
+export enum SmeRole {
+  Legal = 'Legal Counsel',
+  Finance = 'Finance Controller',
+  Procurement = 'Procurement Specialist',
+  Consolidated = 'SME Agent Review'
+}
+
+export interface SmeReview {
+  id: string;
+  role: SmeRole;
+  comment: string;
+  timestamp: string;
+}
+
 export interface SavedTender {
   id: string;
   name: string;
@@ -63,4 +77,5 @@ export interface SavedTender {
   structure: string[];
   draftContent?: string;
   status: TenderStatus;
+  reviews?: SmeReview[];
 }

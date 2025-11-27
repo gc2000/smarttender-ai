@@ -3,8 +3,8 @@ import ChatBubble from './components/ChatBubble';
 import AnalysisPanel from './components/AnalysisPanel';
 import SavedTendersList from './components/SavedTendersList';
 import ConfigEditor from './components/ConfigEditor';
-import { Message, Sender, TenderAnalysis, SavedTender, TenderStatus } from './types';
-import { sendChatMessage, analyzeTenderRequirements } from './services/geminiService';
+import { Message, Sender, TenderAnalysis, SavedTender, TenderStatus, SmeReview, SmeRole } from './types';
+import { sendChatMessage, analyzeTenderRequirements, generateSmeReview } from './services/geminiService';
 import { saveTenderToStorage, getSavedTenders, deleteTenderFromStorage } from './services/tenderStorage';
 
 // Simple UUID generator
@@ -29,13 +29,14 @@ const App: React.FC = () => {
   const [currentProjectName, setCurrentProjectName] = useState<string | null>(null);
   const [currentDraft, setCurrentDraft] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<TenderStatus>(TenderStatus.Draft);
+  const [currentReviews, setCurrentReviews] = useState<SmeReview[]>([]);
 
   const [showSavedTenders, setShowSavedTenders] = useState(false);
   const [showConfigEditor, setShowConfigEditor] = useState(false);
   const [savedTenders, setSavedTenders] = useState<SavedTender[]>([]);
   
   // Resizing & Layout State
-  const [sidebarWidth, setSidebarWidth] = useState(550);
+  const [sidebarWidth, setSidebarWidth] = useState(450);
   const [isResizing, setIsResizing] = useState(false);
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
 
@@ -129,6 +130,7 @@ const App: React.FC = () => {
     setCurrentProjectName(null);
     setCurrentDraft(null);
     setCurrentStatus(TenderStatus.Draft);
+    setCurrentReviews([]);
 
     const analysis = await analyzeTenderRequirements(messages);
     setTenderAnalysis(analysis);
@@ -156,7 +158,8 @@ const App: React.FC = () => {
       analysis: updatedAnalysis,
       structure, // Save the modified structure
       draftContent: draft || undefined,
-      status: currentStatus // Preserve current status
+      status: currentStatus, // Preserve current status
+      reviews: currentReviews // Preserve reviews
     };
 
     const updated = saveTenderToStorage(newTender);
@@ -184,10 +187,45 @@ const App: React.FC = () => {
         analysis: tenderAnalysis,
         structure: tenderAnalysis.structure || [],
         draftContent: currentDraft || undefined,
-        status: newStatus
+        status: newStatus,
+        reviews: currentReviews
       };
       const updatedList = saveTenderToStorage(updatedTender);
       setSavedTenders(updatedList);
+    }
+  };
+  
+  const handleAddReview = async (role: SmeRole, draftContent: string) => {
+    if (!draftContent || !tenderAnalysis) return;
+    
+    // Call Gemini Service with domain context
+    const comment = await generateSmeReview(draftContent, role, tenderAnalysis.domain);
+    
+    const newReview: SmeReview = {
+        id: generateId(),
+        role,
+        comment,
+        timestamp: new Date().toISOString()
+    };
+    
+    const updatedReviews = [...currentReviews, newReview];
+    setCurrentReviews(updatedReviews);
+    
+    // Persist if project is saved
+    if (currentTenderId && tenderAnalysis) {
+        const updatedTender: SavedTender = {
+            id: currentTenderId,
+            name: currentProjectName || 'Untitled',
+            domain: tenderAnalysis.domain,
+            createdAt: new Date().toISOString(),
+            analysis: tenderAnalysis,
+            structure: tenderAnalysis.structure || [],
+            draftContent: currentDraft || undefined,
+            status: currentStatus,
+            reviews: updatedReviews
+        };
+        const updatedList = saveTenderToStorage(updatedTender);
+        setSavedTenders(updatedList);
     }
   };
 
@@ -203,6 +241,7 @@ const App: React.FC = () => {
     setCurrentProjectName(tender.name);
     setCurrentDraft(tender.draftContent || null);
     setCurrentStatus(tender.status || TenderStatus.Draft);
+    setCurrentReviews(tender.reviews || []);
     
     setShowSavedTenders(false);
     
@@ -225,6 +264,7 @@ const App: React.FC = () => {
       setCurrentProjectName(null);
       setCurrentDraft(null);
       setCurrentStatus(TenderStatus.Draft);
+      setCurrentReviews([]);
     }
   };
 
@@ -335,7 +375,7 @@ const App: React.FC = () => {
 
         {/* Input Area */}
         <div className="p-4 bg-white border-t border-gray-200">
-          <div className="relative max-w-4xl mx-auto flex items-center gap-3">
+          <div className="relative max-w-5xl mx-auto flex items-center gap-3">
             <textarea
               className="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block w-full p-3 resize-none shadow-sm outline-none transition-all"
               rows={1}
@@ -354,7 +394,10 @@ const App: React.FC = () => {
               </svg>
             </button>
           </div>
-          <p className="text-center text-xs text-gray-400 mt-2">AI can make mistakes. Please review generated tenders carefully.</p>
+          <div className="text-center mt-2">
+            <p className="text-xs text-gray-400">AI can make mistakes. Please review generated tenders carefully.</p>
+            <p className="text-[10px] text-gray-300 mt-1">© 2025 Gu Chao</p>
+          </div>
         </div>
       </main>
 
@@ -388,7 +431,7 @@ const App: React.FC = () => {
         {!isLeftPanelOpen && (
            <button 
              onClick={() => setIsLeftPanelOpen(true)}
-             className="absolute left-0 top-1/2 -translate-y-1/2 bg-white border border-l-0 border-gray-300 shadow-md rounded-r-lg p-1.5 text-gray-500 hover:text-indigo-600 z-50 hover:pl-2 transition-all"
+             className="absolute left-0 top-1/2 -translate-x-1/2 bg-white border border-l-0 border-gray-300 shadow-md rounded-r-lg p-1.5 text-gray-500 hover:text-indigo-600 z-50 hover:pl-2 transition-all"
              title="Expand Chat Window"
            >
              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -403,6 +446,8 @@ const App: React.FC = () => {
           initialDraft={currentDraft}
           status={currentStatus}
           onStatusChange={handleStatusChange}
+          reviews={currentReviews}
+          onAddReview={handleAddReview}
         />
       </aside>
 

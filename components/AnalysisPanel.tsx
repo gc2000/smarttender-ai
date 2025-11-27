@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TenderAnalysis, PurchaseDomain, TenderStatus } from '../types';
+import { TenderAnalysis, PurchaseDomain, TenderStatus, SmeRole, SmeReview } from '../types';
 import { generateTenderDraft } from '../services/geminiService';
 import { getStandardClauses } from '../config/clauseLibrary';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
@@ -13,6 +13,8 @@ interface AnalysisPanelProps {
   initialDraft?: string | null;
   status?: TenderStatus;
   onStatusChange?: (status: TenderStatus) => void;
+  reviews?: SmeReview[];
+  onAddReview?: (role: SmeRole, draftContent: string) => void;
 }
 
 const getDomainColor = (domain: PurchaseDomain) => {
@@ -34,6 +36,16 @@ const getStatusColor = (status: TenderStatus) => {
     case TenderStatus.Rejected: return 'bg-red-100 text-red-800';
     default: return 'bg-gray-100 text-gray-600';
   }
+};
+
+const getReviewRoleColor = (role: SmeRole) => {
+    switch (role) {
+        case SmeRole.Consolidated: return 'bg-purple-50 border-purple-200 text-purple-800';
+        case SmeRole.Legal: return 'bg-red-50 border-red-200 text-red-800';
+        case SmeRole.Finance: return 'bg-emerald-50 border-emerald-200 text-emerald-800';
+        case SmeRole.Procurement: return 'bg-blue-50 border-blue-200 text-blue-800';
+        default: return 'bg-gray-50 border-gray-200 text-gray-800';
+    }
 };
 
 // Helper to re-number sections when one is deleted or moved
@@ -60,7 +72,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   initialProjectName, 
   initialDraft, 
   status = TenderStatus.Draft, 
-  onStatusChange 
+  onStatusChange,
+  reviews = [],
+  onAddReview
 }) => {
   const [draft, setDraft] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -69,8 +83,13 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [projectName, setProjectName] = useState('');
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview');
   
+  // Loading state for review
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
   // Ref for scrolling to save input
   const saveSectionRef = useRef<HTMLDivElement>(null);
+  const lastDraftRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (analysis && analysis.structure) {
@@ -78,6 +97,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       
       // Initialize draft
       setDraft(initialDraft || null);
+      lastDraftRef.current = initialDraft || null;
       
       // Use the initial name if provided (e.g. from loaded project), otherwise clear
       setProjectName(initialProjectName || ''); 
@@ -90,6 +110,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     const text = await generateTenderDraft(analysis, sections);
     
     setDraft(text);
+    lastDraftRef.current = text;
     setIsGenerating(false);
     setViewMode('preview'); // Auto switch to preview on generation
 
@@ -255,6 +276,22 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       ${nextNum}.1.1 Detailed requirement`;
     setSections([...sections, newSection]);
   };
+  
+  const handleRunConsolidatedReview = async () => {
+      // Allow running review even if unsaved (pass current draft)
+      if (!onAddReview || !draft) return;
+      setReviewLoading(true);
+      await onAddReview(SmeRole.Consolidated, draft);
+      setReviewLoading(false);
+      // Auto expand history if it was closed to show the new one? 
+      // Actually latest one is always shown, so no need.
+  };
+
+  const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setDraft(val);
+    lastDraftRef.current = val;
+  };
 
   if (isLoading) {
     return (
@@ -280,6 +317,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   }
 
   const activeClauses = getStandardClauses(analysis.domain);
+
+  // Sort reviews: newest first
+  const sortedReviews = [...reviews].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const latestReview = sortedReviews[0];
+  const historyReviews = sortedReviews.slice(1);
 
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6 relative">
@@ -465,46 +507,6 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       </div>
 
-      {/* Workflow Actions */}
-      {status && onStatusChange && (
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Workflow Actions</span>
-           
-           {status === TenderStatus.Draft && (
-             <button 
-               onClick={() => onStatusChange(TenderStatus.Review)}
-               className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition-colors shadow-sm"
-             >
-               Submit for Review
-             </button>
-           )}
-
-           {status === TenderStatus.Review && (
-             <div className="flex gap-3">
-               <button 
-                 onClick={() => onStatusChange(TenderStatus.Approved)}
-                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition-colors shadow-sm"
-               >
-                 Approve
-               </button>
-               <button 
-                 onClick={() => onStatusChange(TenderStatus.Rejected)}
-                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition-colors shadow-sm"
-               >
-                 Reject
-               </button>
-             </div>
-           )}
-
-           {(status === TenderStatus.Approved || status === TenderStatus.Rejected) && (
-              <div className={`p-3 rounded-lg text-center font-medium ${status === TenderStatus.Approved ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                 Document {status}
-                 <button onClick={() => onStatusChange(TenderStatus.Draft)} className="ml-2 text-xs underline opacity-70 hover:opacity-100">Reopen</button>
-              </div>
-           )}
-        </div>
-      )}
-
       {/* Draft Preview */}
       {draft && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -567,15 +569,132 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   dangerouslySetInnerHTML={{ __html: marked.parse(draft) as string }} 
                 />
              ) : (
-                <textarea 
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  className="w-full h-full p-6 font-mono text-sm focus:outline-none resize-none bg-white text-gray-900"
-                  spellCheck={false}
+                <textarea
+                    value={draft || ''}
+                    onChange={handleEditorChange}
+                    className="w-full h-full p-8 font-mono text-sm bg-white text-gray-900 resize-none focus:outline-none"
                 />
              )}
           </div>
         </div>
+      )}
+
+      {/* Workflow Actions - Moved BELOW Draft Preview */}
+      {status && onStatusChange && (status !== TenderStatus.Draft || draft) && (
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">Workflow Actions</span>
+           
+           {status === TenderStatus.Draft && (
+             <div className="flex gap-2">
+                {/* SME Agent Review (Left) */}
+                {draft && (
+                   <button 
+                     onClick={handleRunConsolidatedReview}
+                     disabled={reviewLoading}
+                     className={`flex-1 font-medium py-2 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2
+                        ${reviewLoading ? 'bg-purple-100 text-purple-400' : 'bg-purple-600 hover:bg-purple-700 text-white'}
+                     `}
+                   >
+                     {reviewLoading ? (
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                     ) : (
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     )}
+                     SME Agent Review
+                   </button>
+                )}
+                
+                {/* Submit for Review (Right) */}
+                {draft && (
+                  <button 
+                    onClick={() => onStatusChange(TenderStatus.Review)}
+                    className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition-colors shadow-sm"
+                  >
+                    Submit for Review
+                  </button>
+                )}
+             </div>
+           )}
+
+           {status === TenderStatus.Review && (
+             <div className="flex flex-col gap-4">
+               {/* Review Buttons */}
+               <div className="flex gap-2 mb-2">
+                 <button 
+                   onClick={() => onStatusChange(TenderStatus.Approved)}
+                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition-colors shadow-sm"
+                 >
+                   Approve
+                 </button>
+                 <button 
+                   onClick={() => onStatusChange(TenderStatus.Rejected)}
+                   className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition-colors shadow-sm"
+                 >
+                   Reject
+                 </button>
+               </div>
+             </div>
+           )}
+
+           {(status === TenderStatus.Approved || status === TenderStatus.Rejected) && (
+              <div className={`p-3 rounded-lg text-center font-medium ${status === TenderStatus.Approved ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                 Document {status}
+                 <button onClick={() => onStatusChange(TenderStatus.Draft)} className="ml-2 text-xs underline opacity-70 hover:opacity-100">Reopen</button>
+              </div>
+           )}
+        </div>
+      )}
+
+      {/* Review Results - Moved Below Workflow Actions */}
+      {sortedReviews.length > 0 && (
+         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-4">
+           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Review Feedback</span>
+           
+           {/* Latest Review */}
+           {latestReview && (
+              <div className={`p-4 rounded-lg border ${getReviewRoleColor(latestReview.role)} relative`}>
+                 <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-sm flex items-center gap-2">
+                      {latestReview.role === SmeRole.Consolidated && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                      {latestReview.role} <span className="text-xs font-normal opacity-75">(Latest)</span>
+                    </h4>
+                    <span className="text-[10px] opacity-70">
+                      {new Date(latestReview.timestamp).toLocaleString()}
+                    </span>
+                 </div>
+                 <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: marked.parse(latestReview.comment) as string }} />
+              </div>
+           )}
+
+           {/* History Reviews */}
+           {historyReviews.length > 0 && (
+             <div className="mt-3 pt-3 border-t border-gray-100">
+               <button 
+                 onClick={() => setShowHistory(!showHistory)}
+                 className="flex items-center gap-2 text-xs text-gray-500 hover:text-indigo-600 transition-colors"
+               >
+                 <svg className={`w-3 h-3 transition-transform ${showHistory ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                 View History ({historyReviews.length} older)
+               </button>
+               
+               {showHistory && (
+                 <div className="space-y-3 mt-3 pl-4 border-l-2 border-gray-100">
+                   {historyReviews.map((review) => (
+                      <div key={review.id} className={`p-3 rounded-lg border opacity-75 hover:opacity-100 transition-opacity bg-white ${getReviewRoleColor(review.role)}`}>
+                         <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-xs flex items-center gap-2">
+                              {review.role} <span className="font-normal opacity-70">(History)</span>
+                            </h4>
+                            <span className="text-[10px] opacity-70">{new Date(review.timestamp).toLocaleString()}</span>
+                         </div>
+                         <div className="text-xs prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: marked.parse(review.comment) as string }} />
+                      </div>
+                   ))}
+                 </div>
+               )}
+             </div>
+           )}
+         </div>
       )}
 
     </div>

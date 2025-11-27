@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Message, TenderAnalysis, PurchaseDomain, Sender } from "../types";
+import { Message, TenderAnalysis, PurchaseDomain, Sender, SmeRole } from "../types";
 import { getDynamicTemplateConfig, getDynamicStandardClauses } from "./configManager";
 
 // Initialize Gemini Client
@@ -207,3 +207,73 @@ export const generateTenderDraft = async (
         return "# Error generating draft";
     }
 }
+
+/**
+ * Performs a review of the tender draft by a specific SME persona or a consolidated review.
+ */
+export const generateSmeReview = async (
+  draft: string,
+  role: SmeRole,
+  domain: PurchaseDomain
+): Promise<string> => {
+  let instruction = "";
+  
+  if (role === SmeRole.Consolidated) {
+      const config = getDynamicTemplateConfig(domain);
+      instruction = `
+      You are an elite Tender Compliance Auditor. Your task is to perform a strict review of the Draft Tender below against the specific rules of the ${domain} domain.
+
+      === COMPLIANCE RULES (DOs and DON'Ts) ===
+      ${config.focusArea}
+
+      === MANDATORY KEYWORDS ===
+      ${config.complianceKeywords.join(', ')}
+
+      === INSTRUCTIONS ===
+      1. **Check against DOs:** Identify if the draft properly implements the "DOs" listed above.
+      2. **Check against DON'Ts:** rigorously scan the draft for any violations of the "DON'Ts". If a violation is found, Flag it as a CRITICAL ISSUE.
+      3. **Keyword Check:** Verify if the mandatory keywords are present in the correct context.
+      4. **Generate Report:** Provide a structured Markdown report with the following headers:
+         - **Compliance Score**: (High/Medium/Low)
+         - **Critical Violations (DON'Ts)**: Bullet points of any "DON'T" rules found in the text.
+         - **Adherence to Best Practices (DOs)**: What was done well.
+         - **Missing Elements**: Keywords or standard requirements that are absent.
+         - **Suggestions**: Specific actionable changes to improve the tender.
+
+      Be direct, professional, and strict.
+      `;
+  } else {
+    // Legacy individual roles (fallback if needed)
+    switch (role) {
+        case SmeRole.Legal:
+        instruction = "You are a Senior Legal Counsel. Review the tender for liability risks, IP rights, termination clauses, and regulatory compliance. Highlight missing indemnity clauses or vague legal terms.";
+        break;
+        case SmeRole.Finance:
+        instruction = "You are a Finance Controller. Review the tender for payment terms, penalties, currency risks, and cost structures. Ensure milestone payments are clear and financial exposure is minimized.";
+        break;
+        case SmeRole.Procurement:
+        instruction = "You are a Senior Procurement Manager. Review the tender for fair competition, evaluation criteria, vendor qualification requirements, and clarity of scope. Ensure the timeline is realistic.";
+        break;
+    }
+  }
+
+  const prompt = `
+    ${instruction}
+    
+    === TENDER DRAFT TO REVIEW ===
+    ${draft.substring(0, 20000)} // Limit context if needed
+    
+    Provide your detailed assessment now.
+  `;
+
+  try {
+      const response = await ai.models.generateContent({
+          model: MODEL_CHAT,
+          contents: prompt
+      });
+      return response.text || "No comments.";
+  } catch (e) {
+      console.error("Review Error:", e);
+      return "Unable to generate review at this time.";
+  }
+};

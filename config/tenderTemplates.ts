@@ -3,7 +3,29 @@ import { PurchaseDomain, TenderTemplateConfig } from '../types';
 export const TENDER_TEMPLATES: Record<string, TenderTemplateConfig> = {
   [PurchaseDomain.IT]: {
     domain: PurchaseDomain.IT,
-    focusArea: "Technical feasibility, data security, SLA (Service Level Agreements), and licensing.",
+    focusArea: `DOs
+Ensure procurement law and fair competition compliance.
+Define scope, deliverables, and milestones clearly.
+Require clear IP ownership or licensing terms.
+Include data protection and confidentiality obligations.
+Require clear SLAs and milestone-based payments.
+Include reasonable liability caps and indemnity for IP infringement.
+Require warranties for deliverables and compliance.
+Include termination rights and exit/transition assistance.
+Require anti-corruption and conflict-of-interest declarations.
+Ensure transparent and objective evaluation criteria.
+
+DON’Ts
+Don’t include vendor-specific or restrictive requirements.
+Don’t leave IP ownership ambiguous.
+Don’t allow supplier to control or misuse client data.
+Don’t accept unlimited liability.
+Don’t allow vague deliverables or ambiguous acceptance criteria.
+Don’t include arbitrary evaluation discretion.
+Don’t omit termination and exit clauses.
+Don’t allow forced subcontracting to a specific provider.
+Don’t omit anti-bribery and compliance obligations.
+Don’t accept hidden costs or unfair payment terms.`,
     complianceKeywords: ["GDPR", "ISO 27001", "Uptime Guarantee", "Data Privacy"],
     sections: [
       `1. Executive Summary
@@ -67,7 +89,29 @@ export const TENDER_TEMPLATES: Record<string, TenderTemplateConfig> = {
   },
   [PurchaseDomain.Furniture]: {
     domain: PurchaseDomain.Furniture,
-    focusArea: "Ergonomics, durability, materials, warranty, and installation services.",
+    focusArea: `DOs
+Ensure fair competition and compliance with procurement rules.
+Clearly define product specifications and quantities.
+Include delivery and installation obligations.
+Require warranties for defects and durability.
+Include liability caps for damages or delays.
+Ensure transparent payment terms.
+Include termination rights for non-performance.
+Require anti-corruption and conflict-of-interest compliance.
+Ensure objective evaluation criteria.
+Include confidentiality obligations for designs or layouts.
+
+DON’Ts
+Don’t specify a single brand or vendor unnecessarily.
+Don’t leave delivery or installation obligations vague.
+Don’t omit warranty or replacement obligations.
+Don’t accept unlimited liability for damages.
+Don’t allow subjective selection of supplier.
+Don’t omit termination rights.
+Don’t allow suppliers to override design or specifications without approval.
+Don’t omit conflict-of-interest checks.
+Don’t accept hidden costs or extra charges.
+Don’t allow suppliers to retain client designs or layouts.`,
     complianceKeywords: ["ISO 9001", "Fire Safety Standards", "Ergonomic Certification", "Warranty"],
     sections: [
       `1. Project Overview
@@ -120,7 +164,29 @@ export const TENDER_TEMPLATES: Record<string, TenderTemplateConfig> = {
   },
   [PurchaseDomain.Logistics]: {
     domain: PurchaseDomain.Logistics,
-    focusArea: "Route optimization, vehicle standards, insurance, and tracking capabilities.",
+    focusArea: `DOs
+Ensure procurement law and fair competition compliance.
+Define scope (routes, volumes, timelines) clearly.
+Include insurance and liability obligations.
+Include termination rights for non-performance or delay.
+Require transparency in pricing and payment terms.
+Include anti-corruption and conflict-of-interest clauses.
+Ensure supplier licenses and legal compliance are specified.
+Include objective evaluation criteria.
+Include confidentiality obligations for shipment details.
+Require reporting and documentation obligations.
+
+DON’Ts
+Don’t specify a single carrier/vendor without justification.
+Don’t leave scope or delivery timelines vague.
+Don’t omit liability and insurance requirements.
+Don’t allow unlimited liability on the buyer.
+Don’t allow subjective supplier selection.
+Don’t omit termination and exit clauses.
+Don’t accept hidden surcharges or fuel adjustments without disclosure.
+Don’t allow suppliers to bypass legal or licensing obligations.
+Don’t ignore conflict-of-interest risks.
+Don’t allow unrestricted use of shipment data by supplier.`,
     complianceKeywords: ["Vehicle Safety Standards", "Insurance Coverage", "Tracking API", "Timeliness"],
     sections: [
       `1. Operational Scope
@@ -167,7 +233,29 @@ export const TENDER_TEMPLATES: Record<string, TenderTemplateConfig> = {
   },
   [PurchaseDomain.Medical]: {
     domain: PurchaseDomain.Medical,
-    focusArea: "Patient safety, regulatory compliance, training, and maintenance.",
+    focusArea: `DOs
+Ensure compliance with public procurement and healthcare regulations.
+Specify equipment specifications, quantities, and standards clearly.
+Include delivery, installation, and calibration obligations.
+Require warranties and post-delivery support.
+Include liability limits for defective equipment or delays.
+Include clear payment terms tied to delivery milestones.
+Ensure anti-corruption and conflict-of-interest compliance.
+Include termination rights for non-performance.
+Include objective evaluation criteria.
+Include confidentiality obligations for patient-related or sensitive data.
+
+DON’Ts
+Don’t favor a single brand or supplier unnecessarily.
+Don’t leave technical or delivery obligations vague.
+Don’t omit warranties or maintenance obligations.
+Don’t accept unlimited liability.
+Don’t allow subjective evaluation of bids.
+Don’t omit termination and exit rights.
+Don’t allow hidden or post-delivery costs.
+Don’t ignore anti-bribery and compliance clauses.
+Don’t allow suppliers to retain patient or clinical data improperly.
+Don’t accept vague ownership or licensing for software or embedded systems.`,
     complianceKeywords: ["FDA Approved", "CE Marking", "ISO 13485", "Clinical Application"],
     sections: [
       `1. Clinical Needs Assessment
@@ -214,7 +302,29 @@ export const TENDER_TEMPLATES: Record<string, TenderTemplateConfig> = {
   },
   [PurchaseDomain.Construction]: {
     domain: PurchaseDomain.Construction,
-    focusArea: "Safety regulations, bill of quantities (BOQ), timeline, and site management.",
+    focusArea: `DOs
+Ensure compliance with procurement and construction regulations.
+Define scope, drawings, and specifications clearly.
+Include timelines and milestones for completion.
+Include warranties for workmanship and materials.
+Include liability caps for defects or delays.
+Ensure transparent payment terms tied to milestones.
+Include termination and exit rights.
+Require anti-corruption and conflict-of-interest compliance.
+Include clear dispute resolution clauses.
+Include confidentiality for designs and sensitive project information.
+
+DON’Ts
+Don’t specify a single contractor/vendor unnecessarily.
+Don’t leave scope or drawings vague.
+Don’t omit warranties or defect liability.
+Don’t allow unlimited liability.
+Don’t allow subjective evaluation of bids.
+Don’t omit termination or exit clauses.
+Don’t allow hidden or unapproved costs.
+Don’t ignore anti-bribery and ethical compliance.
+Don’t allow contractors to retain project designs or sensitive data.
+Don’t leave dispute resolution mechanisms undefined.`,
     complianceKeywords: ["Building Codes", "HSE Standards", "Contractor All Risk Insurance", "Permits"],
     sections: [
       `1. Project Scope & Site Location
@@ -267,7 +377,29 @@ export const TENDER_TEMPLATES: Record<string, TenderTemplateConfig> = {
   },
   [PurchaseDomain.General]: {
     domain: PurchaseDomain.General,
-    focusArea: "Quality, cost-effectiveness, and reliability.",
+    focusArea: `DOs
+Ensure procurement law and fair competition compliance.
+Clearly define specifications, quantities, and quality standards.
+Include delivery obligations and deadlines.
+Include warranties or replacement obligations.
+Include liability limits for defects or delays.
+Ensure transparent pricing and milestone-based payments.
+Include termination rights for non-performance.
+Include anti-corruption and conflict-of-interest clauses.
+Include objective evaluation criteria.
+Include confidentiality obligations for proprietary information.
+
+DON’Ts
+Don’t specify a single vendor unnecessarily.
+Don’t leave scope or quality vague.
+Don’t omit warranties or replacement obligations.
+Don’t accept unlimited liability.
+Don’t allow subjective evaluation criteria.
+Don’t omit termination and exit rights.
+Don’t accept hidden charges or unfair payment terms.
+Don’t ignore anti-bribery and ethical compliance.
+Don’t allow suppliers to retain sensitive or proprietary information.
+Don’t leave contractual obligations ambiguous.`,
     complianceKeywords: ["Standard Trade Terms", "Quality Assurance"],
     sections: [
       `1. Introduction

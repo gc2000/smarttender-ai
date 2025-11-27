@@ -164,7 +164,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
                 setSelectedDomain(e.target.value as PurchaseDomain);
                 setEditingClause(null);
               }}
-              className="border border-gray-300 rounded-md text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+              className="border border-gray-300 rounded-md text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white text-gray-900"
             >
               {Object.values(PurchaseDomain).map(d => (
                 <option key={d} value={d}>{d}</option>
@@ -190,7 +190,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 overflow-hidden flex bg-white">
           
           {activeTab === 'templates' && (
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
@@ -201,7 +201,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
                     <textarea 
                       value={templates[selectedDomain]?.focusArea || ''}
                       onChange={(e) => handleTemplateChange('focusArea', e.target.value)}
-                      className="w-full h-24 border border-gray-300 rounded-lg p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full h-24 border border-gray-300 rounded-lg p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900"
                       placeholder="Describe the focus of this template..."
                     />
                   </div>
@@ -210,7 +210,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
                     <textarea 
                       value={templates[selectedDomain]?.complianceKeywords.join(', ') || ''}
                       onChange={(e) => handleTemplateChange('complianceKeywords', e.target.value.split(',').map(s => s.trim()))}
-                      className="w-full h-24 border border-gray-300 rounded-lg p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full h-24 border border-gray-300 rounded-lg p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900"
                       placeholder="e.g., GDPR, ISO 27001"
                     />
                   </div>
@@ -226,7 +226,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
                   <textarea 
                     value={templates[selectedDomain]?.sections.join('\n\n') || ''}
                     onChange={(e) => handleTemplateSectionsChange(e.target.value)}
-                    className="w-full h-[400px] border border-gray-300 rounded-lg p-4 text-sm font-mono bg-gray-50 focus:bg-white focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                    className="w-full h-[400px] border border-gray-300 rounded-lg p-4 text-sm font-mono bg-gray-50 focus:bg-white focus:ring-indigo-500 focus:border-indigo-500 resize-y text-gray-900"
                   />
                </div>
             </div>
@@ -283,7 +283,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
                         type="text"
                         value={editingClause.title}
                         onChange={(e) => handleClauseChange(editingClause.id, 'title', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white text-gray-900"
                       />
                     </div>
 
@@ -303,7 +303,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ isOpen, onClose }) => {
                       <textarea 
                         value={editingClause.content}
                         onChange={(e) => handleClauseChange(editingClause.id, 'content', e.target.value)}
-                        className="w-full h-64 border border-gray-300 rounded-lg p-4 text-sm font-mono bg-gray-50 focus:bg-white focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                        className="w-full h-64 border border-gray-300 rounded-lg p-4 text-sm font-mono bg-gray-50 focus:bg-white focus:ring-indigo-500 focus:border-indigo-500 resize-y text-gray-900"
                       />
                     </div>
                   </div>
